@@ -1,0 +1,131 @@
+---
+- name: Create the Application Monitoring Project
+  k8s:
+    name: "{{ project_name }}"
+    api_version: project.openshift.io/v1
+    kind: Project
+    state: present
+
+- name: Create the kube-state-metrics Service Account
+  k8s:
+    name: kube-state-metrics
+    namespace: "{{ project_name }}"
+    api_version: v1
+    kind: ServiceAccount
+    state: present
+
+- name: Create the kube-state-metrics Role Binding
+  k8s:
+    state: present
+    definition:
+      kind: RoleBinding
+      apiVersion: rbac.authorization.k8s.io/v1
+      metadata:
+        name: kube-state-metrics-view
+        namespace: "{{ project_name }}"
+      subjects:
+      - kind: ServiceAccount
+        name: kube-state-metrics
+        namespace: "{{ project_name }}"
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: view
+
+- name: Create the kube-state-metrics Deployment
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'kube-state-metrics-dc.yml') }}"
+
+- name: Create the kube-state-metrics Service
+  k8s:
+    state: present
+    definition:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        name: kube-state-metrics
+        namespace: "{{ project_name }}"
+      spec:
+        ports:
+          - name: 8080-tcp
+            protocol: TCP
+            port: 8080
+            targetPort: 8080
+        selector:
+          app: kube-state-metrics
+
+- name: Create the alertmanager Deployment
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'alertmanager-dc.yml') }}"
+
+- name: Create the alertmanager Service
+  k8s:
+    state: present
+    definition:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        name: alertmanager
+        namespace: "{{ project_name }}"
+      spec:
+        ports:
+          - name: 9093-tcp
+            protocol: TCP
+            port: 9093
+            targetPort: 9093
+        selector:
+          app: alertmanager
+
+- name: Create the prometheus-config Config Map
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'prometheus-config-cm.yml') }}"
+
+- name: Create the prometheus Deployment
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'prometheus-dc.yml') }}"
+
+- name: Create the prometheus Service
+  k8s:
+    state: present
+    definition:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        name: prometheus
+        namespace: "{{ project_name }}"
+      spec:
+        ports:
+          - name: 9090-tcp
+            protocol: TCP
+            port: 9090
+            targetPort: 9090
+        selector:
+          app: prometheus
+
+- name: Create the grafana Deployment
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'grafana-dc.yml') }}"
+
+- name: Create the grafana Service
+  k8s:
+    state: present
+    definition:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        name: grafana
+        namespace: "{{ project_name }}"
+      spec:
+        ports:
+          - name: 3000-tcp
+            protocol: TCP
+            port: 3000
+            targetPort: 3000
+        selector:
+          app: grafana
+
