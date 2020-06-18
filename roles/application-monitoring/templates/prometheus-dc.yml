@@ -42,6 +42,8 @@ spec:
         - mountPath: /etc/prometheus/prometheus.yml
           name: prometheus-config
           subPath: prometheus.yml
+        - mountPath: /etc/prometheus/rules/prometheus-k8s-rulefiles
+          name: prometheus-k8s-rulefiles
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -54,3 +56,7 @@ spec:
           defaultMode: 420
           name: prometheus-config
         name: prometheus-config
+      - configMap:
+          defaultMode: 420
+          name: prometheus-k8s-rulefiles
+        name: prometheus-k8s-rulefiles

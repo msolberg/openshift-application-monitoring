@@ -83,6 +83,11 @@
     state: present
     definition: "{{ lookup('template', 'prometheus-config-cm.yml') }}"
 
+- name: Create the prometheus-k8s-rulefiles Config Map
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'prometheus-k8s-rulefiles-cm.yml') }}"
+
 - name: Create the prometheus Deployment
   k8s:
     state: present
